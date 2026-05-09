@@ -102,7 +102,7 @@ curl -X POST http://localhost:5000/api/translate \
 | **AI / GenAI** | Google Gemini 1.5 Flash |
 | **Backend** | Python 3.x, Flask, Flask-CORS |
 | **Frontend** | HTML5, CSS3, Vanilla JavaScript |
-| **API** | RESTful JSON API |
+| **API** | RESTful JSON API |.
 
 ---
 
