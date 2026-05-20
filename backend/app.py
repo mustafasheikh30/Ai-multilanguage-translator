@@ -9,19 +9,34 @@ load_dotenv()
 app = Flask(__name__)
 CORS(app)
 
-# Configure OpenRouter client
-api_key = os.getenv("OPENROUTER_API_KEY")
-if not api_key or api_key == "your_openrouter_api_key_here":
-    print("[WARNING] OPENROUTER_API_KEY not set in .env file!")
-    print("   Get your free key at: https://openrouter.ai/keys")
-    print("   Then add it to backend/.env file")
-    client = None
-else:
+# Configure API Client (supports Google Gemini directly or OpenRouter)
+gemini_api_key = os.getenv("GEMINI_API_KEY")
+openrouter_api_key = os.getenv("OPENROUTER_API_KEY")
+
+client = None
+MODEL_ID = "gemini-2.0-flash"
+PROVIDER_NAME = "None"
+
+if gemini_api_key and gemini_api_key != "your_gemini_api_key_here":
+    client = OpenAI(
+        base_url="https://generativelanguage.googleapis.com/v1beta/openai/",
+        api_key=gemini_api_key,
+    )
+    MODEL_ID = "gemini-2.0-flash"
+    PROVIDER_NAME = "Google Gemini"
+    print("[OK] Google Gemini API configured successfully via OpenAI-compatible endpoint")
+elif openrouter_api_key and openrouter_api_key != "your_openrouter_api_key_here":
     client = OpenAI(
         base_url="https://openrouter.ai/api/v1",
-        api_key=api_key,
+        api_key=openrouter_api_key,
     )
+    MODEL_ID = "google/gemini-2.0-flash-001"
+    PROVIDER_NAME = "OpenRouter"
     print("[OK] OpenRouter API configured successfully")
+else:
+    print("[WARNING] Neither GEMINI_API_KEY nor OPENROUTER_API_KEY set in .env file!")
+    print("   Please create a backend/.env file with your API key.")
+    print("   Get a free Gemini key at: https://aistudio.google.com/app/apikey")
 
 # Supported languages
 LANGUAGES = [
@@ -42,13 +57,9 @@ LANGUAGES = [
     "Welsh", "Yiddish", "Zulu"
 ]
 
-# OpenRouter model to use (free Gemini Flash via OpenRouter)
-MODEL_ID = "google/gemini-2.0-flash-001"
-
-
 def get_client():
     if client is None:
-        raise RuntimeError("OpenRouter API key not configured. Add OPENROUTER_API_KEY to backend/.env")
+        raise RuntimeError("API key not configured. Please add GEMINI_API_KEY or OPENROUTER_API_KEY to backend/.env")
     return client
 
 
@@ -195,7 +206,7 @@ def health_check():
     return jsonify({
         "status": "running",
         "api_configured": api_configured,
-        "provider": "OpenRouter",
+        "provider": PROVIDER_NAME,
         "model": MODEL_ID,
         "supported_languages": len(LANGUAGES),
         "message": "AI Multilanguage Translator Backend"
@@ -216,7 +227,7 @@ if __name__ == "__main__":
     print("\n" + "="*50)
     print("   AI Multilanguage Translator - Backend")
     print("="*50)
-    print(f"   Provider            : OpenRouter")
+    print(f"   Provider            : {PROVIDER_NAME}")
     print(f"   Model               : {MODEL_ID}")
     print(f"   Supported languages : {len(LANGUAGES)}")
     print(f"   Running at          : http://localhost:5000")
